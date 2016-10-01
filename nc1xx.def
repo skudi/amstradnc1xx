@@ -1,0 +1,86 @@
+; Amstrad nc100 and maybe nc150/nc200
+;
+; All info copied from 
+; http://www.cpcwiki.eu/index.php/NC100_IO_Specification
+;
+;	Address                 Comment                 R/W
+;
+; E0-FF                   Not Used                -
+; D0-DF                   RTC (TC8521)            R/W
+; C0-C1                   UART (uPD71051)         R/W
+; B0-B9                   Key data in             R
+; A0                      Card Status etc.        R
+; 90                      IRQ request status      R/W
+; 80-8F                   Not Used
+; 70                      Power on/off control    W
+; 60                      IRQ Mask                W
+; 50-53                   Speaker frequency       W
+; 40                      Parallel port data      W
+; 30                      Baud rate etc.          W
+; 20                      Card wiat control       W
+; 10-13                   Memory management       R/W
+; 00                      Display memory start    W
+
+;I/O adresses
+	DEFC SYSCTL1=$30
+	DEFC PARDATA=$40
+	DEFC SYSSTAT=$A0
+	DEFC UARTDAT=$C0
+	DEFC UARTCTL=$C1
+
+;bit masks
+	DEFC BPARSTR=@01000000 ;bit 6 - parallel interface Strobe signal (SYSCTL1)
+	DEFC BPARACK=@00000001 ;bit 0 - parallel interface ACK signal (SYSSTAT)
+	DEFC BPARBSY=@00000010 ;bit 1 - parallel interface BUSY signal (SYSSTAT)
+	
+;SYSCTL1
+;Address = 30                                    Write only
+;Baud rate etc.
+;
+;        bit 7     select card register 1=common, 0=attribute
+;        bit 6     parallel interface Strobe signal
+;        bit 5     Not Used
+;        bit 4     uPD4711 line driver, 1=off, 0=on
+;        bit 3     UART clock and reset, 1=off, 0=on
+;
+;        bits 2-0  set the baud rate as follows
+;                000 = 150
+;                001 = 300
+;                010 = 600
+;                011 = 1200
+;                100 = 2400
+;                101 = 4800
+;                110 = 9600
+;                111 = 19200
+;
+;On reset all data is set to 1.
+;If programming the UART directly ensure that TxD clock is operating x16.
+
+;SYSSTAT
+;Address = A0                                     Read only
+;Memory card/battery status
+;
+;        bit 7           Memory card present 0 = yes, 1 = no
+;        bit 6           Card write protected 1 = yes, 0 = no
+;
+;        bit 5           Input voltage = 1 if >= to 4 Volts
+;        bit 4           Mem card battery. 0 = battery is low
+;        bit 3           Alkaline batteries. 0 if >= 3.2 Volts
+;        bit 2           Lithium battery. 0 if >= 2.7 Volts
+;
+;        bit 1           Parallel interface BUSY (0 if busy)
+;        bit 0           Parallel interface ACK  (1 if ACK)
+
+;UARTDAT/UARTCTL
+;Address = C0                                      Read/Write
+;UART control/data
+;
+;        C0              UART data register
+;        C1              UART status/control register
+;
+;The UART is the NEC uPD71051. Programmers are advised to study the data
+;sheet for that chip for more information. The Serial interface requires
+;that the uPD4711 line driver chip be truned on by writing a 0 to bit 4 of
+;I/O address 30. While turned on power consumption increases so this should
+;only be done when necessary.
+
